@@ -19,7 +19,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # FastAPI 앱 생성
-app = FastAPI(title="Area API", version="1.0.0")
+app = FastAPI(
+    title="Area API",
+    version="1.0.0",
+    description="산책 코스 추천 및 기록 관리 서비스"
+)
 
 # 예외 핸들러 등록
 app.add_exception_handler(HTTPException, custom_http_exception_handler)

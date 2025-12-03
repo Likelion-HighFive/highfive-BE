@@ -14,13 +14,14 @@ from app.utils.auth import (
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/signup", response_model=ApiResponse[UserResponse], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/signup",
+    response_model=ApiResponse[UserResponse],
+    status_code=status.HTTP_201_CREATED,
+    summary="회원가입",
+    description="이메일 중복 검사 및 비밀번호 유효성 검사 (영문, 숫자 포함 8자리 이상)"
+)
 def signup(user_data: UserSignup, db: Session = Depends(get_db)):
-    """
-    회원가입
-    - 이메일 중복 검사
-    - 비밀번호 유효성 검사 (영문, 숫자 포함 8자리 이상)
-    """
     # 이메일 중복 검사
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
@@ -52,13 +53,13 @@ def signup(user_data: UserSignup, db: Session = Depends(get_db)):
     return created_response(data=user_response, message="회원가입이 완료되었습니다.")
 
 
-@router.post("/login", response_model=ApiResponse[Token])
+@router.post(
+    "/login",
+    response_model=ApiResponse[Token],
+    summary="로그인",
+    description="JWT 액세스 토큰 반환 (유효기간 24시간)"
+)
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
-    """
-    로그인
-    - 이메일과 비밀번호로 인증
-    - JWT 액세스 토큰 반환
-    """
     # 사용자 조회
     user = db.query(User).filter(User.email == user_data.email).first()
     if not user:

@@ -23,25 +23,24 @@ import json
 router = APIRouter(prefix="/paths", tags=["paths"])
 
 
-@router.post("", response_model=ApiResponse[PathResponse], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=ApiResponse[PathResponse],
+    status_code=status.HTTP_201_CREATED,
+    summary="산책 코스 등록",
+    description="거리/시간 자동 계산, S3 이미지 업로드, 태그 JSON 배열"
+)
 async def create_path(
     name: str = Form(...),
     start_location: str = Form(...),
     end_location: str = Form(...),
     introduction: Optional[str] = Form(None),
-    tags: str = Form(...),  # JSON string: ["감성길", "봄"]
+    tags: str = Form(...),
     representative_image_index: int = Form(0),
     images: List[UploadFile] = File(default=[]),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    산책 코스 등록
-    - 시작/끝 위치로 거리 자동 계산
-    - 거리로 예상 소요 시간 자동 계산
-    - 이미지 여러 개 업로드 (0개 가능)
-    - 대표 이미지 선택
-    """
     # 태그 파싱
     tags_list = json.loads(tags)
 
@@ -114,7 +113,12 @@ async def create_path(
     return created_response(data=path_response, message="산책 코스가 등록되었습니다.")
 
 
-@router.get("", response_model=ApiResponse[List[PathListResponse]])
+@router.get(
+    "",
+    response_model=ApiResponse[List[PathListResponse]],
+    summary="산책 코스 목록 조회",
+    description="필터링 (ALL/EMOTIONAL/CITY_VIEW/NATURE/NIGHT_VIEW/SAFE), 정렬 (LATEST/RECOMMENDED/LIKES/DISTANCE)"
+)
 def get_paths(
     filter: Optional[FilterEnum] = FilterEnum.ALL,
     sort: Optional[SortEnum] = SortEnum.LATEST,
@@ -122,11 +126,6 @@ def get_paths(
     current_user: Optional[User] = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    산책 코스 목록 조회
-    - 필터링: ALL, EMOTIONAL, CITY_VIEW, NATURE, NIGHT_VIEW, SAFE
-    - 정렬: LATEST, RECOMMENDED, LIKES, DISTANCE
-    """
     # 필터 매핑 (영어 -> 한글)
     filter_mapping = {
         FilterEnum.EMOTIONAL: "감성길",
@@ -193,18 +192,17 @@ def get_paths(
     return success_response(data=result, message="산책 코스 목록 조회가 완료되었습니다.")
 
 
-@router.get("/{path_id}", response_model=ApiResponse[PathDetailResponse])
+@router.get(
+    "/{path_id}",
+    response_model=ApiResponse[PathDetailResponse],
+    summary="산책 코스 상세 조회",
+    description="전체 이미지, 코스 타입, 좋아요 여부 포함"
+)
 def get_path_detail(
     path_id: int,
     current_user: Optional[User] = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    산책 코스 상세 조회
-    - 이미지 목록 (대표 이미지 포함)
-    - 종류(감성길 등), 등록일, 소개글, 좋아요 개수
-    - 시작/끝 위치
-    """
     path = db.query(Path).filter(Path.id == path_id).first()
     if not path:
         raise HTTPException(status_code=404, detail="코스를 찾을 수 없습니다")
