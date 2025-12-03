@@ -19,7 +19,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # FastAPI 앱 생성
-app = FastAPI(title="Area API", version="1.0.0")
+app = FastAPI(
+    title="Area API",
+    version="1.0.0",
+    description="산책 코스 추천 및 기록 관리 서비스"
+)
 
 # 예외 핸들러 등록
 app.add_exception_handler(HTTPException, custom_http_exception_handler)
@@ -47,9 +51,9 @@ def startup_event():
     # 서버 시작 시 DB 연결 확인 및 테이블 생성 로그 출력
     try:
         Base.metadata.create_all(bind=engine)
-        logger.info("Database connected & tables created successfully.")
+        logger.info("======================[[ DB 연결 성공 ]]========================")
     except Exception as e:
-        logger.error(f"Database connection failed: {e}")
+        logger.error(f"======================[[ DB 연결 실패 ]] {e} ========================")
 
 @app.get("/")
 def root():
