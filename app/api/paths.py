@@ -14,6 +14,7 @@ from app.schemas.path import (
     FilterEnum,
     SortEnum,
 )
+from app.schemas.common import ApiResponse, created_response, success_response
 from app.utils.dependencies import get_current_user
 from app.utils.distance import calculate_distance, calculate_estimated_time
 from app.utils.s3 import upload_image_to_s3
@@ -22,7 +23,7 @@ import json
 router = APIRouter(prefix="/paths", tags=["paths"])
 
 
-@router.post("", response_model=PathResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ApiResponse[PathResponse], status_code=status.HTTP_201_CREATED)
 async def create_path(
     name: str = Form(...),
     start_location: str = Form(...),
@@ -96,7 +97,7 @@ async def create_path(
 
     tags_response = [tag.tag_name for tag in new_path.tags]
 
-    return PathResponse(
+    path_response = PathResponse(
         id=new_path.id,
         name=new_path.name,
         start_location=new_path.start_location,
@@ -110,8 +111,10 @@ async def create_path(
         tags=tags_response
     )
 
+    return created_response(data=path_response, message="산책 코스가 등록되었습니다.")
 
-@router.get("", response_model=List[PathListResponse])
+
+@router.get("", response_model=ApiResponse[List[PathListResponse]])
 def get_paths(
     filter: Optional[FilterEnum] = FilterEnum.ALL,
     sort: Optional[SortEnum] = SortEnum.LATEST,
@@ -187,10 +190,10 @@ def get_paths(
             is_liked=is_liked
         ))
 
-    return result
+    return success_response(data=result, message="산책 코스 목록 조회가 완료되었습니다.")
 
 
-@router.get("/{path_id}", response_model=PathDetailResponse)
+@router.get("/{path_id}", response_model=ApiResponse[PathDetailResponse])
 def get_path_detail(
     path_id: int,
     current_user: Optional[User] = Depends(get_current_user),
@@ -229,7 +232,7 @@ def get_path_detail(
     # 날짜 포맷 변환 (yyyy.mm.dd)
     created_at_str = path.created_at.strftime("%Y.%m.%d")
 
-    return PathDetailResponse(
+    path_detail = PathDetailResponse(
         id=path.id,
         name=path.name,
         start_location=path.start_location,
@@ -243,3 +246,5 @@ def get_path_detail(
         path_types=path_types,
         is_liked=is_liked
     )
+
+    return success_response(data=path_detail, message="산책 코스 상세 조회가 완료되었습니다.")
