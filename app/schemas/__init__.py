@@ -24,7 +24,6 @@ from app.schemas.walking import (
     WalkingHistoryResponse,
     WalkingStatsResponse,
 )
-from app.schemas.like import LikeCreate, LikeResponse
 
 __all__ = [
     "UserSignup",
@@ -42,11 +41,5 @@ __all__ = [
     "PathImageResponse",
     "TagEnum",
     "FilterEnum",
-    "SortEnum",
-    "WalkingStart",
-    "WalkingEnd",
-    "WalkingHistoryResponse",
-    "WalkingStatsResponse",
-    "LikeCreate",
-    "LikeResponse",
+    "SortEnum"
 ]

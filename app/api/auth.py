@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
 from app.schemas.user import UserSignup, UserLogin, Token, UserResponse
+from app.schemas.common import ApiResponse, created_response, success_response
 from app.utils.auth import (
     verify_password,
     get_password_hash,
@@ -13,7 +14,7 @@ from app.utils.auth import (
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/signup", response_model=ApiResponse[UserResponse], status_code=status.HTTP_201_CREATED)
 def signup(user_data: UserSignup, db: Session = Depends(get_db)):
     """
     회원가입
@@ -47,10 +48,11 @@ def signup(user_data: UserSignup, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    return new_user
+    user_response = UserResponse.from_orm(new_user)
+    return created_response(data=user_response, message="회원가입이 완료되었습니다.")
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=ApiResponse[Token])
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
     """
     로그인
@@ -74,5 +76,6 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
 
     # JWT 토큰 생성
     access_token = create_access_token(data={"sub": user.email})
+    token_response = Token(access_token=access_token, token_type="bearer")
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return success_response(data=token_response, message="로그인이 완료되었습니다.")
