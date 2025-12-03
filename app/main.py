@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
 from app.models import *
-from app.api import auth
+from app.api import auth, paths
+
 import logging
 
 # 로깅
@@ -23,6 +24,8 @@ app.add_middleware(
 
 # Routers
 app.include_router(auth.router)
+app.include_router(paths.router)
+
 
 # 앱 시작 시
 @app.on_event("startup")

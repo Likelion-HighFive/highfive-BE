@@ -40,8 +40,8 @@ def calculate_estimated_time(distance: float, walking_speed: float = 4.0) -> int
     if distance <= 0:
         return 0
     time_hours = distance / walking_speed
-    time_minutes = int(time_hours * 60)
-    return time_minutes
+    time_minutes = round(time_hours * 60)
+    return max(1, time_minutes)  # 최소 1분
 
 
 def calculate_carbon_saved(distance: float, carbon_per_km: float = 0.21) -> float:
