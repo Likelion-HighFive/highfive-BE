@@ -53,4 +53,4 @@ def startup_event():
 
 @app.get("/")
 def root():
-    return {"message": "Area API Server"}
+    return success_response(data={"message": "Area API Server"}, message="서버가 정상 작동 중입니다.")
