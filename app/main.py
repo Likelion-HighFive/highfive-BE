@@ -1,8 +1,16 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from jose.exceptions import JWTError, ExpiredSignatureError
 from app.database import Base, engine
 from app.models import *
 from app.api import auth, paths
+from app.utils.exceptions import (
+    custom_http_exception_handler,
+    validation_exception_handler,
+    jwt_exception_handler
+)
+from app.schemas.common import success_response
 
 import logging
 
@@ -12,6 +20,12 @@ logger = logging.getLogger(__name__)
 
 # FastAPI 앱 생성
 app = FastAPI(title="Area API", version="1.0.0")
+
+# 예외 핸들러 등록
+app.add_exception_handler(HTTPException, custom_http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(JWTError, jwt_exception_handler)
+app.add_exception_handler(ExpiredSignatureError, jwt_exception_handler)
 
 # CORS 설정
 app.add_middleware(
