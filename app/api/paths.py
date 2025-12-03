@@ -7,7 +7,6 @@ from app.models.user import User
 from app.models.path import Path, PathImage, PathTag
 from app.models.like import Like
 from app.schemas.path import (
-    PathCreate,
     PathResponse,
     PathListResponse,
     PathDetailResponse,
