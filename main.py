@@ -51,9 +51,9 @@ def startup_event():
     # 서버 시작 시 DB 연결 확인 및 테이블 생성 로그 출력
     try:
         Base.metadata.create_all(bind=engine)
-        logger.info("Database connected & tables created successfully.")
+        logger.info("======================[[ DB 연결 성공 ]]========================")
     except Exception as e:
-        logger.error(f"Database connection failed: {e}")
+        logger.error(f"======================[[ DB 연결 실패 ]] {e} ========================")
 
 @app.get("/")
 def root():

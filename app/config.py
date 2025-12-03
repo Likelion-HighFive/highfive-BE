@@ -8,7 +8,8 @@ class Settings(BaseSettings):
     DB_PORT: int = 3306
     DB_USER: str
     DB_PASSWORD: str
-    DB_NAME: str = "area"
+    DB_NAME: str
+    DATABASE_URL: str | None = None # 전체 URL을 직접 지정할 수도 있음
 
     # JWT
     SECRET_KEY: str
@@ -33,7 +34,15 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
-        return f"mysql+pymysql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        # 1) .env에 DATABASE_URL이 있으면 그걸 사용
+        if self.DATABASE_URL:
+            return self.DATABASE_URL
+
+        # 2) 없으면 조합해서 생성
+        return (
+            f"mysql+pymysql://{self.DB_USER}:{self.DB_PASSWORD}"
+            f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        )
 
 
 @lru_cache()
