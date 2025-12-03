@@ -29,8 +29,8 @@ async def create_path(
     end_location: str = Form(...),
     introduction: Optional[str] = Form(None),
     tags: str = Form(...),  # JSON string: ["감성길", "봄"]
-    images: Optional[List[UploadFile]] = File(None),
-    representative_image_index: Optional[int] = Form(0),
+    representative_image_index: int = Form(0),
+    images: List[UploadFile] = File(default=[]),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -70,12 +70,12 @@ async def create_path(
         db.add(path_tag)
 
     # 이미지 업로드 및 저장
-    if images:
+    if images and len(images) > 0:
         for idx, image in enumerate(images):
-            # S3에 업로드
+            # S3 업로드
             image_url = await upload_image_to_s3(image, folder=f"paths/{new_path.id}")
 
-            # DB에 저장
+            # DB 저장
             is_representative = 1 if idx == representative_image_index else 0
             path_image = PathImage(
                 path_id=new_path.id,
@@ -87,7 +87,28 @@ async def create_path(
     db.commit()
     db.refresh(new_path)
 
-    return new_path
+    # 응답 데이터 구성
+    images_response = [PathImageResponse(
+        id=img.id,
+        image_url=img.image_url,
+        is_representative=bool(img.is_representative)
+    ) for img in new_path.images]
+
+    tags_response = [tag.tag_name for tag in new_path.tags]
+
+    return PathResponse(
+        id=new_path.id,
+        name=new_path.name,
+        start_location=new_path.start_location,
+        end_location=new_path.end_location,
+        introduction=new_path.introduction,
+        estimated_time=new_path.estimated_time,
+        distance=new_path.distance,
+        likes_count=new_path.likes_count,
+        created_at=new_path.created_at,
+        images=images_response,
+        tags=tags_response
+    )
 
 
 @router.get("", response_model=List[PathListResponse])
