@@ -2,3 +2,21 @@ fastapi==0.104.1
 uvicorn==0.24.0
 python-dotenv==1.0.0
 pydantic==2.5.0
+
+# Database
+sqlalchemy==2.0.23
+pymysql==1.1.0
+cryptography==41.0.7
+
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# File upload
+python-multipart==0.0.6
+
+# Image processing
+Pillow==10.1.0
+
+# Geolocation
+geopy==2.4.1
