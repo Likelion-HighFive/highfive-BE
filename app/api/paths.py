@@ -120,14 +120,25 @@ def get_paths(
 ):
     """
     산책 코스 목록 조회
-    - 필터링: 전체, 감성길, 씨티뷰길, 자연길, 야경길
-    - 정렬: 최신순, 추천순, 좋아요순, 거리순
+    - 필터링: ALL, EMOTIONAL, CITY_VIEW, NATURE, NIGHT_VIEW, SAFE
+    - 정렬: LATEST, RECOMMENDED, LIKES, DISTANCE
     """
+    # 필터 매핑 (영어 -> 한글)
+    filter_mapping = {
+        FilterEnum.EMOTIONAL: "감성길",
+        FilterEnum.CITY_VIEW: "씨티뷰길",
+        FilterEnum.NATURE: "자연길",
+        FilterEnum.NIGHT_VIEW: "야경길",
+        FilterEnum.SAFE: "안전길"
+    }
+
     query = db.query(Path)
 
     # 필터링
     if filter != FilterEnum.ALL:
-        query = query.join(PathTag).filter(PathTag.tag_name == filter.value)
+        tag_name = filter_mapping.get(filter)
+        if tag_name:
+            query = query.join(PathTag).filter(PathTag.tag_name == tag_name)
 
     # 정렬
     if sort == SortEnum.LATEST:

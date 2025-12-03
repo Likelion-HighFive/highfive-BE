@@ -17,19 +17,19 @@ class TagEnum(str, Enum):
 
 
 class FilterEnum(str, Enum):
-    ALL = "전체"
-    EMOTIONAL = "감성길"
-    CITY_VIEW = "씨티뷰길"
-    NATURE = "자연길"
-    NIGHT_VIEW = "야경길"
+    ALL = "ALL"
+    EMOTIONAL = "EMOTIONAL"
+    CITY_VIEW = "CITY_VIEW"
+    NATURE = "NATURE"
+    NIGHT_VIEW = "NIGHT_VIEW"
+    SAFE = "SAFE"
 
 
 class SortEnum(str, Enum):
-    LATEST = "최신순"
-    RECOMMENDED = "추천순"
-    LIKES = "좋아요순"
-    DISTANCE = "거리순"
-    # 인기순은 시간 관계상 미구현
+    LATEST = "LATEST"
+    RECOMMENDED = "RECOMMENDED"
+    LIKES = "LIKES"
+    DISTANCE = "DISTANCE"
 
 class PathImageCreate(BaseModel):
     image_url: str
