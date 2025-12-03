@@ -1,15 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
-from app.models import *  
+from app.models import *
+from app.api import auth
 import logging
 
-# 로깅 
+# 로깅
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # FastAPI 앱 생성
-app = FastAPI()
+app = FastAPI(title="Area API", version="1.0.0")
 
 # CORS 설정
 app.add_middleware(
@@ -19,6 +20,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Routers
+app.include_router(auth.router)
 
 # 앱 시작 시
 @app.on_event("startup")
@@ -32,4 +36,4 @@ def startup_event():
 
 @app.get("/")
 def root():
-    return {"message": "Hello, World!"}
+    return {"message": "Area API Server"}
