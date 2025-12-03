@@ -116,6 +116,7 @@ def get_paths(
     filter: Optional[FilterEnum] = FilterEnum.ALL,
     sort: Optional[SortEnum] = SortEnum.LATEST,
     user_location: Optional[str] = None,
+    current_user: Optional[User] = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -166,6 +167,15 @@ def get_paths(
         # 태그 목록
         tags = [tag.tag_name for tag in path.tags]
 
+        # 좋아요 여부 확인
+        is_liked = False
+        if current_user:
+            like = db.query(Like).filter(
+                Like.user_id == current_user.id,
+                Like.path_id == path.id
+            ).first()
+            is_liked = like is not None
+
         result.append(PathListResponse(
             id=path.id,
             name=path.name,
@@ -173,7 +183,8 @@ def get_paths(
             estimated_time=path.estimated_time,
             distance=path.distance,
             likes_count=path.likes_count,
-            tags=tags
+            tags=tags,
+            is_liked=is_liked
         ))
 
     return result
@@ -188,7 +199,7 @@ def get_path_detail(
     """
     산책 코스 상세 조회
     - 이미지 목록 (대표 이미지 포함)
-    - 태그, 등록일, 소개글, 좋아요 개수
+    - 종류(감성길 등), 등록일, 소개글, 좋아요 개수
     - 시작/끝 위치
     """
     path = db.query(Path).filter(Path.id == path_id).first()
@@ -211,8 +222,9 @@ def get_path_detail(
         is_representative=bool(img.is_representative)
     ) for img in path.images]
 
-    # 태그 목록
-    tags = [tag.tag_name for tag in path.tags]
+    # 종류 (감성길, 씨티뷰길, 자연길, 야경길, 안전길만 필터링)
+    path_type_list = ["감성길", "씨티뷰길", "자연길", "야경길", "안전길"]
+    path_types = [tag.tag_name for tag in path.tags if tag.tag_name in path_type_list]
 
     # 날짜 포맷 변환 (yyyy.mm.dd)
     created_at_str = path.created_at.strftime("%Y.%m.%d")
@@ -228,6 +240,6 @@ def get_path_detail(
         likes_count=path.likes_count,
         created_at=created_at_str,
         images=images,
-        tags=tags,
+        path_types=path_types,
         is_liked=is_liked
     )

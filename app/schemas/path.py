@@ -78,6 +78,7 @@ class PathListResponse(BaseModel):
     distance: float
     likes_count: int
     tags: List[str]
+    is_liked: bool = False
 
     class Config:
         from_attributes = True
@@ -94,7 +95,7 @@ class PathDetailResponse(BaseModel):
     likes_count: int
     created_at: str  # yyyy.mm.dd 형식
     images: List[PathImageResponse]
-    tags: List[str]
+    path_types: List[str]  # 종류: 감성길, 씨티뷰길, 자연길, 야경길, 안전길
     is_liked: bool
 
     class Config:
