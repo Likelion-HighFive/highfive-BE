@@ -17,13 +17,21 @@ from app.schemas.path import (
 )
 from app.utils.dependencies import get_current_user
 from app.utils.distance import calculate_distance, calculate_estimated_time
+from app.utils.s3 import upload_image_to_s3
+import json
 
 router = APIRouter(prefix="/paths", tags=["paths"])
 
 
 @router.post("", response_model=PathResponse, status_code=status.HTTP_201_CREATED)
-def create_path(
-    path_data: PathCreate,
+async def create_path(
+    name: str = Form(...),
+    start_location: str = Form(...),
+    end_location: str = Form(...),
+    introduction: Optional[str] = Form(None),
+    tags: str = Form(...),  # JSON string: ["감성길", "봄"]
+    images: Optional[List[UploadFile]] = File(None),
+    representative_image_index: Optional[int] = Form(0),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -31,19 +39,24 @@ def create_path(
     산책 코스 등록
     - 시작/끝 위치로 거리 자동 계산
     - 거리로 예상 소요 시간 자동 계산
+    - 이미지 여러 개 업로드 (0개 가능)
+    - 대표 이미지 선택
     """
+    # 태그 파싱
+    tags_list = json.loads(tags)
+
     # 거리 계산
-    distance = calculate_distance(path_data.start_location, path_data.end_location)
+    distance = calculate_distance(start_location, end_location)
 
     # 예상 소요 시간 계산
     estimated_time = calculate_estimated_time(distance)
 
     # 경로 생성
     new_path = Path(
-        name=path_data.name,
-        start_location=path_data.start_location,
-        end_location=path_data.end_location,
-        introduction=path_data.introduction,
+        name=name,
+        start_location=start_location,
+        end_location=end_location,
+        introduction=introduction,
         distance=distance,
         estimated_time=estimated_time,
         user_id=current_user.id
@@ -53,9 +66,24 @@ def create_path(
     db.flush()
 
     # 태그 추가
-    for tag in path_data.tags:
-        path_tag = PathTag(path_id=new_path.id, tag_name=tag.value)
+    for tag in tags_list:
+        path_tag = PathTag(path_id=new_path.id, tag_name=tag)
         db.add(path_tag)
+
+    # 이미지 업로드 및 저장
+    if images:
+        for idx, image in enumerate(images):
+            # S3에 업로드
+            image_url = await upload_image_to_s3(image, folder=f"paths/{new_path.id}")
+
+            # DB에 저장
+            is_representative = 1 if idx == representative_image_index else 0
+            path_image = PathImage(
+                path_id=new_path.id,
+                image_url=image_url,
+                is_representative=is_representative
+            )
+            db.add(path_image)
 
     db.commit()
     db.refresh(new_path)

@@ -15,9 +15,16 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    # AWS S3
+    AWS_ACCESS_KEY_ID: str
+    AWS_SECRET_ACCESS_KEY: str
+    AWS_REGION: str
+    AWS_S3_BUCKET: str
+
     # File Upload
     UPLOAD_DIR: str = "uploads"
-    MAX_FILE_SIZE: int = 10485760 
+    MAX_FILE_SIZE: int = 10485760
+
     # Server
     DEBUG: bool = True
 
