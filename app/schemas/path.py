@@ -100,3 +100,11 @@ class PathDetailResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class PathLikeStatusResponse(BaseModel):
+    path_id: int
+    is_liked: bool
+    likes_count: int
+
+    class Config:
+        from_attributes = True
