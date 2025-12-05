@@ -192,62 +192,6 @@ def get_paths(
 
     return success_response(data=result, message="산책 코스 목록 조회가 완료되었습니다.")
 
-
-@router.get(
-    "/{path_id}",
-    response_model=ApiResponse[PathDetailResponse],
-    summary="산책 코스 상세 조회",
-    description="전체 이미지, 코스 타입, 좋아요 여부 포함"
-)
-def get_path_detail(
-    path_id: int,
-    current_user: Optional[User] = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    path = db.query(Path).filter(Path.id == path_id).first()
-    if not path:
-        raise HTTPException(status_code=404, detail="코스를 찾을 수 없습니다")
-
-    # 좋아요 여부 확인
-    is_liked = False
-    if current_user:
-        like = db.query(Like).filter(
-            Like.user_id == current_user.id,
-            Like.path_id == path_id
-        ).first()
-        is_liked = like is not None
-
-    # 이미지 목록
-    images = [PathImageResponse(
-        id=img.id,
-        image_url=img.image_url,
-        is_representative=bool(img.is_representative)
-    ) for img in path.images]
-
-    # 종류 (감성길, 씨티뷰길, 자연길, 야경길, 안전길만 필터링)
-    path_type_list = ["감성길", "씨티뷰길", "자연길", "야경길", "안전길"]
-    path_types = [tag.tag_name for tag in path.tags if tag.tag_name in path_type_list]
-
-    # 날짜 포맷 변환 (yyyy.mm.dd)
-    created_at_str = path.created_at.strftime("%Y.%m.%d")
-
-    path_detail = PathDetailResponse(
-        id=path.id,
-        name=path.name,
-        start_location=path.start_location,
-        end_location=path.end_location,
-        introduction=path.introduction,
-        estimated_time=path.estimated_time,
-        distance=path.distance,
-        likes_count=path.likes_count,
-        created_at=created_at_str,
-        images=images,
-        path_types=path_types,
-        is_liked=is_liked
-    )
-
-    return success_response(data=path_detail, message="산책 코스 상세 조회가 완료되었습니다.")
-
 @router.post(
     "/{path_id}/like-toggle",
     response_model=ApiResponse[PathLikeStatusResponse],
@@ -357,3 +301,58 @@ def get_liked_paths(
         data=result,
         message="좋아요한 산책 코스 목록 조회가 완료되었습니다."
     )
+
+@router.get(
+    "/{path_id}",
+    response_model=ApiResponse[PathDetailResponse],
+    summary="산책 코스 상세 조회",
+    description="전체 이미지, 코스 타입, 좋아요 여부 포함"
+)
+def get_path_detail(
+    path_id: int,
+    current_user: Optional[User] = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    path = db.query(Path).filter(Path.id == path_id).first()
+    if not path:
+        raise HTTPException(status_code=404, detail="코스를 찾을 수 없습니다")
+
+    # 좋아요 여부 확인
+    is_liked = False
+    if current_user:
+        like = db.query(Like).filter(
+            Like.user_id == current_user.id,
+            Like.path_id == path_id
+        ).first()
+        is_liked = like is not None
+
+    # 이미지 목록
+    images = [PathImageResponse(
+        id=img.id,
+        image_url=img.image_url,
+        is_representative=bool(img.is_representative)
+    ) for img in path.images]
+
+    # 종류 (감성길, 씨티뷰길, 자연길, 야경길, 안전길만 필터링)
+    path_type_list = ["감성길", "씨티뷰길", "자연길", "야경길", "안전길"]
+    path_types = [tag.tag_name for tag in path.tags if tag.tag_name in path_type_list]
+
+    # 날짜 포맷 변환 (yyyy.mm.dd)
+    created_at_str = path.created_at.strftime("%Y.%m.%d")
+
+    path_detail = PathDetailResponse(
+        id=path.id,
+        name=path.name,
+        start_location=path.start_location,
+        end_location=path.end_location,
+        introduction=path.introduction,
+        estimated_time=path.estimated_time,
+        distance=path.distance,
+        likes_count=path.likes_count,
+        created_at=created_at_str,
+        images=images,
+        path_types=path_types,
+        is_liked=is_liked
+    )
+
+    return success_response(data=path_detail, message="산책 코스 상세 조회가 완료되었습니다.")
