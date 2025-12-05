@@ -13,6 +13,14 @@ class WalkingEnd(BaseModel):
     distance: int
     is_completed: bool
 
+class WalkingSessionStartResponse(BaseModel):
+    """
+    걷기 세션 시작 시 내려줄 응답
+    - session_id: WalkingHistory.id
+    - path_id: 어떤 코스를 걷는지
+    """
+    session_id: int
+    path_id: int
 
 class WalkingHistoryResponse(BaseModel):
     id: int
