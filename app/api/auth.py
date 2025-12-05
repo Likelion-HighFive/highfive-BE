@@ -19,7 +19,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
     response_model=ApiResponse[UserResponse],
     status_code=status.HTTP_201_CREATED,
     summary="회원가입",
-    description="이메일 중복 검사 및 비밀번호 유효성 검사 (영문, 숫자 포함 8자리 이상)"
+    description="이메일 중복 검사, 닉네임 입력, 비밀번호 유효성 검사 (영문, 숫자 포함 8자리 이상)"
 )
 def signup(user_data: UserSignup, db: Session = Depends(get_db)):
     # 이메일 중복 검사
@@ -42,6 +42,7 @@ def signup(user_data: UserSignup, db: Session = Depends(get_db)):
     new_user = User(
         email=user_data.email,
         password=hashed_password,
+        nickname=user_data.nickname,
         profile_image="default_profile.png"
     )
 
