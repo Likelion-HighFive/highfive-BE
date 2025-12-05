@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -127,12 +128,14 @@ def end_walking_session(
 
     # distance 누적 (m -> km)
     delta_distance_km = round(body.distance / 1000.0, 2)
-    user.total_distance = round((user.total_distance or 0.0) + delta_distance_km, 2)
+    current_total_distance = float(user.total_distance or 0.0)
+    user.total_distance = round(current_total_distance + delta_distance_km, 2)
 
     # 탄소 절감량 누적 (거리 기반)
     delta_carbon_kg = calculate_carbon_saved(delta_distance_km)
-    user.carbon_saved = round((user.carbon_saved or 0.0) + delta_carbon_kg, 2)
-
+    current_carbon = float(user.carbon_saved or 0.0)
+    user.carbon_saved = round(current_carbon + delta_carbon_kg, 2)
+    
     db.commit()
     db.refresh(history)
     db.refresh(user)
@@ -199,9 +202,11 @@ def get_walking_summary(
         .one()
     )
 
-    # distance는 m 단위이므로 km로 변환
-    total_distance_km = round(total_distance_m / 1000.0, 2) if total_distance_m else 0.0
-
+    # 여기서 Decimal -> float 변환
+    # total_distance_m 이 Decimal일 수도 있고 int일 수도 있으니 float()으로 통일
+    distance_m_float = float(total_distance_m or 0)
+    total_distance_km = round(distance_m_float / 1000.0, 2) if distance_m_float > 0 else 0.0
+    
     # km -> 탄소 절감량(kg)
     total_carbon_saved_kg = calculate_carbon_saved(total_distance_km)
 
