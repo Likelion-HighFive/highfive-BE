@@ -13,6 +13,7 @@ from app.schemas.path import (
     PathImageResponse,
     FilterEnum,
     SortEnum,
+    PathLikeStatusResponse,
 )
 from app.schemas.common import ApiResponse, created_response, success_response
 from app.utils.dependencies import get_current_user
@@ -246,3 +247,113 @@ def get_path_detail(
     )
 
     return success_response(data=path_detail, message="산책 코스 상세 조회가 완료되었습니다.")
+
+@router.post(
+    "/{path_id}/like-toggle",
+    response_model=ApiResponse[PathLikeStatusResponse],
+    summary="산책 코스 좋아요 토글",
+    description="이미 좋아요한 코스면 좋아요를 취소하고, 아니라면 좋아요를 등록합니다."
+)
+
+def toggle_path_like(
+    path_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # 코스 존재 여부 확인
+    path = db.query(Path).filter(Path.id == path_id).first()
+    if not path:
+        raise HTTPException(status_code=404, detail="코스를 찾을 수 없습니다")
+
+    # 기존 좋아요 있는지 확인
+    existing_like = db.query(Like).filter(
+        Like.user_id == current_user.id,
+        Like.path_id == path_id
+    ).first()
+
+    # 좋아요가 이미 있으면 → 취소
+    if existing_like:
+        db.delete(existing_like)
+        # likes_count 감소 (0 아래로 내려가지 않게 보호)
+        path.likes_count = max(0, (path.likes_count or 0) - 1)
+        is_liked = False
+        message = "좋아요가 취소되었습니다."
+    else:
+        # 없으면 → 새로 등록
+        new_like = Like(user_id=current_user.id, path_id=path_id)
+        db.add(new_like)
+        path.likes_count = (path.likes_count or 0) + 1
+        is_liked = True
+        message = "좋아요가 등록되었습니다."
+
+    db.commit()
+    db.refresh(path)
+
+    like_status = PathLikeStatusResponse(
+        path_id=path.id,
+        is_liked=is_liked,
+        likes_count=path.likes_count or 0
+    )
+
+    return success_response(
+        data=like_status,
+        message=message
+    )
+    
+@router.get(
+    "/likes",
+    response_model=ApiResponse[List[PathListResponse]],
+    summary="좋아요한 산책 코스 목록 조회",
+    description="사용자가 좋아요한 산책 코스만 모아 조회합니다."
+)
+def get_liked_paths(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    현재 로그인한 사용자가 좋아요한 산책 코스 목록을 반환
+    - PathListResponse 포맷을 재사용
+    - is_liked는 항상 True
+    """
+
+    # 좋아요한 path_id 목록
+    liked_path_ids_subquery = (
+        db.query(Like.path_id)
+        .filter(Like.user_id == current_user.id)
+        .subquery()
+    )
+
+    # 해당 path들만 조회
+    paths = (
+        db.query(Path)
+        .filter(Path.id.in_(liked_path_ids_subquery))
+        .order_by(Path.created_at.desc())
+        .all()
+    )
+
+    result = []
+    for path in paths:
+        # 대표 이미지 찾기
+        representative_image = db.query(PathImage).filter(
+            PathImage.path_id == path.id,
+            PathImage.is_representative == 1
+        ).first()
+
+        # 태그 목록
+        tags = [tag.tag_name for tag in path.tags]
+
+        result.append(PathListResponse(
+            id=path.id,
+            name=path.name,
+            representative_image=representative_image.image_url if representative_image else None,
+            estimated_time=path.estimated_time,
+            distance=path.distance,
+            likes_count=path.likes_count,
+            tags=tags,
+            is_liked=True  # ✅ 좋아요 목록이므로 항상 True
+        ))
+
+    return success_response(
+        data=result,
+        message="좋아요한 산책 코스 목록 조회가 완료되었습니다."
+    )
