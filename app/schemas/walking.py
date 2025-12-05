@@ -31,3 +31,7 @@ class WalkingHistoryResponse(BaseModel):
 class WalkingStatsResponse(BaseModel):
     total_walks: int
     completed_walks: int
+    total_steps: int = 0
+    total_distance_km: float = 0.0
+    total_carbon_saved_kg: float = 0.0
+#기존 DTO 충돌 방지를 위해 total_walks, completed_walks 만 세팅해도 검증 에러 발생 X
