@@ -4,7 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from jose.exceptions import JWTError, ExpiredSignatureError
 from app.database import Base, engine
 from app.models import *
-from app.api import auth, paths, walking
+from app.api import auth, paths, walking, mypage
 from app.utils.exceptions import (
     custom_http_exception_handler,
     validation_exception_handler,
@@ -44,6 +44,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(paths.router)
 app.include_router(walking.router)
+app.include_router(mypage.router)
 
 
 # 앱 시작 시
