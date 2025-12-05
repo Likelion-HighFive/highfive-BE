@@ -48,3 +48,24 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+class UserProfileResponse(BaseModel):
+    id: int
+    email: EmailStr
+    nickname: Optional[str]
+    profile_image: str
+    total_steps: int
+    total_distance: float
+    carbon_saved: float
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class UserNicknameUpdate(BaseModel):
+    nickname: str = Field(..., min_length=1, max_length=50)
+
+
+class UserProfileImageUpdate(BaseModel):
+    profile_image: str
