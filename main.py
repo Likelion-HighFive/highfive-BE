@@ -34,7 +34,11 @@ app.add_exception_handler(ExpiredSignatureError, jwt_exception_handler)
 # CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "*"  # 개발 중에는 모든 origin 허용
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
