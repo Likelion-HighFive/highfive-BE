@@ -118,16 +118,17 @@ async def create_path(
     "",
     response_model=ApiResponse[List[PathListResponse]],
     summary="산책 코스 목록 조회",
-    description="필터링 (ALL/EMOTIONAL/CITY_VIEW/NATURE/NIGHT_VIEW/SAFE), 정렬 (LATEST/RECOMMENDED/LIKES/DISTANCE)"
+    description="필터링 · 정렬 · 검색 지원"
 )
 def get_paths(
-    filter: Optional[FilterEnum] = FilterEnum.ALL,
-    sort: Optional[SortEnum] = SortEnum.LATEST,
-    user_location: Optional[str] = None,
-    current_user: Optional[User] = Depends(get_optional_user),
-    db: Session = Depends(get_db)
+        filter: Optional[FilterEnum] = FilterEnum.ALL,
+        sort: Optional[SortEnum] = SortEnum.LATEST,
+        search: Optional[str] = None,   # 검색 추가
+        user_location: Optional[str] = None,
+        current_user: Optional[User] = Depends(get_optional_user),
+        db: Session = Depends(get_db)
 ):
-    # 필터 매핑 (영어 -> 한글)
+    # 필터 매핑
     filter_mapping = {
         FilterEnum.EMOTIONAL: "감성길",
         FilterEnum.CITY_VIEW: "씨티뷰길",
@@ -137,6 +138,10 @@ def get_paths(
     }
 
     query = db.query(Path)
+
+    # 검색 기능
+    if search:
+        query = query.filter(Path.name.ilike(f"%{search}%"))
 
     # 필터링
     if filter != FilterEnum.ALL:
@@ -150,27 +155,22 @@ def get_paths(
     elif sort == SortEnum.LIKES:
         query = query.order_by(Path.likes_count.desc())
     elif sort == SortEnum.RECOMMENDED:
-        # 추천순: 좋아요 수 + 최신순 조합 -> TODO: 추후 조정 필요
         query = query.order_by(Path.likes_count.desc(), Path.created_at.desc())
     elif sort == SortEnum.DISTANCE:
-        # 거리순: 사용자 위치 기반 (user_location 필요)
         query = query.order_by(Path.distance.asc())
 
     paths = query.all()
 
-    # 응답 데이터 구성
+    # 응답 구성
     result = []
     for path in paths:
-        # 대표 이미지 찾기
         representative_image = db.query(PathImage).filter(
             PathImage.path_id == path.id,
             PathImage.is_representative == 1
         ).first()
 
-        # 태그 목록
         tags = [tag.tag_name for tag in path.tags]
 
-        # 좋아요 여부 확인
         is_liked = False
         if current_user:
             like = db.query(Like).filter(
