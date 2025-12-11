@@ -16,7 +16,7 @@ from app.schemas.path import (
     PathLikeStatusResponse,
 )
 from app.schemas.common import ApiResponse, created_response, success_response
-from app.utils.dependencies import get_current_user
+from app.utils.dependencies import get_current_user, get_optional_user
 from app.utils.distance import calculate_distance, calculate_estimated_time
 from app.utils.s3 import upload_image_to_s3
 import json
@@ -124,7 +124,7 @@ def get_paths(
     filter: Optional[FilterEnum] = FilterEnum.ALL,
     sort: Optional[SortEnum] = SortEnum.LATEST,
     user_location: Optional[str] = None,
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_user),
     db: Session = Depends(get_db)
 ):
     # 필터 매핑 (영어 -> 한글)
