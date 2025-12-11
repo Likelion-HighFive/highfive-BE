@@ -247,7 +247,7 @@ def toggle_path_like(
 @router.get(
     "/likes",
     response_model=ApiResponse[List[PathListResponse]],
-    summary="좋아요한 산책 코스 목록 조회",
+    summary="좋아요한 산책 코스 목록 조회(기존)",
     description="사용자가 좋아요한 산책 코스만 모아 조회합니다."
 )
 def get_liked_paths(
@@ -301,6 +301,85 @@ def get_liked_paths(
         data=result,
         message="좋아요한 산책 코스 목록 조회가 완료되었습니다."
     )
+
+@router.get(
+    "/liked",
+    response_model=ApiResponse[List[PathListResponse]],
+    summary="좋아요한 산책 코스 목록 조회 (검색/필터/정렬 지원 - 추가된 api!!)",
+    description="JWT 인증된 사용자가 좋아요한 코스만 전체 조회 방식으로 필터링/검색/정렬하여 반환합니다."
+)
+def get_liked_paths_advanced(
+        filter: Optional[FilterEnum] = FilterEnum.ALL,
+        sort: Optional[SortEnum] = SortEnum.LATEST,
+        search: Optional[str] = None,
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db)
+):
+    # 좋아요 기반 목록 조회
+    liked_path_ids = (
+        db.query(Like.path_id)
+        .filter(Like.user_id == current_user.id)
+        .subquery()
+    )
+
+    query = db.query(Path).filter(Path.id.in_(liked_path_ids))
+
+    # 검색
+    if search:
+        query = query.filter(Path.name.ilike(f"%{search}%"))
+
+    # 필터(태그)
+    filter_mapping = {
+        FilterEnum.EMOTIONAL: "감성길",
+        FilterEnum.CITY_VIEW: "씨티뷰길",
+        FilterEnum.NATURE: "자연길",
+        FilterEnum.NIGHT_VIEW: "야경길",
+        FilterEnum.SAFE: "안전길"
+    }
+
+    if filter != FilterEnum.ALL:
+        tag = filter_mapping.get(filter)
+        if tag:
+            query = query.join(PathTag).filter(PathTag.tag_name == tag)
+
+    # 정렬
+    if sort == SortEnum.LATEST:
+        query = query.order_by(Path.created_at.desc())
+    elif sort == SortEnum.LIKES:
+        query = query.order_by(Path.likes_count.desc())
+    elif sort == SortEnum.RECOMMENDED:
+        query = query.order_by(Path.likes_count.desc(), Path.created_at.desc())
+    elif sort == SortEnum.DISTANCE:
+        query = query.order_by(Path.distance.asc())
+
+    paths = query.all()
+
+    result = []
+    for path in paths:
+        rep = db.query(PathImage).filter(
+            PathImage.path_id == path.id,
+            PathImage.is_representative == 1
+        ).first()
+
+        tags = [tag.tag_name for tag in path.tags]
+
+        result.append(PathListResponse(
+            id=path.id,
+            name=path.name,
+            representative_image=rep.image_url if rep else None,
+            estimated_time=path.estimated_time,
+            distance=path.distance,
+            likes_count=path.likes_count,
+            tags=tags,
+            is_liked=True
+        ))
+
+    return success_response(
+        data=result,
+        message="좋아요한 산책 코스 목록 조회가 완료되었습니다."
+    )
+
+
 
 @router.get(
     "/{path_id}",
