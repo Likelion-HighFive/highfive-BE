@@ -1,4 +1,5 @@
-from fastapi import Depends, HTTPException, status
+from typing import Optional
+from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -9,8 +10,8 @@ security = HTTPBearer()
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
+        credentials: HTTPAuthorizationCredentials = Depends(security),
+        db: Session = Depends(get_db)
 ) -> User:
     """
     JWT 토큰에서 현재 사용자 정보를 가져옴
@@ -34,3 +35,19 @@ def get_current_user(
         )
 
     return user
+
+
+async def get_optional_user(
+        authorization: Optional[str] = Header(None),
+        db: Session = Depends(get_db),
+):
+    if not authorization:
+        return None
+
+    try:
+        token = authorization.replace("Bearer ", "")
+        payload = decode_access_token(token)
+        user = db.query(User).filter(User.id == payload["user_id"]).first()
+        return user
+    except Exception:
+        return None  # 토큰이 잘못되었어도 그냥 '비로그인'으로 처리
