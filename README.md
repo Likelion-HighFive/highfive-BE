@@ -1,13 +1,14 @@
 # 🌱 Area Backend – Walking & Carbon Tracking API
+<img width="1888" height="1062" alt="image" src="https://github.com/user-attachments/assets/89ea5a89-a762-42e4-99e3-b7aa6ecbf149" />
 
-사용자의 산책 데이터를 기반으로  
-걷기 기록, 코스 추천, 누적 통계, 탄소 절감량 계산 등을 제공하는 FastAPI 기반 백엔드 서비스입니다.
+
+사용자의 산책 데이터를 기반으로 걷기 기록, 코스 추천, 누적 통계, 탄소 절감량 계산 등을 제공하는 FastAPI 기반 백엔드 서비스입니다.
 
 ---
 
 ## 1. 프로젝트 개요
 
-Area 백엔드는 단순 산책 기록을 넘어서,
+Area 백엔드는 
 
 - 이동 데이터 기반 탄소 절감량 산출
 - 산책 코스(사진/태그 포함) 추천 및 좋아요 시스템
